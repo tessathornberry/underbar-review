@@ -343,73 +343,17 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
-    console.log('beginning args: ', arguments);
-    var alreadyCalled = false;
-    var result;
-    var resultsArray = [];
-    var argArray = [];
-
-    // if function has not been called yet
-      // change alreadyCalled to true
-      // result equals calling function with the arguments
-      // push result into result array
-      // push argument into argArray
-    // if function has been called already
-      // check to see if arguments have ever been called already with this function
-      // if arguments have not been used
-        // result equals calling function with the arguments
-        // push result into result array
-        // push argument into argArray
-      // else if arguments have been called
-        // find the index of arguments array
-        // return the results at the index in the results array
+    var cache = {};
 
     return function() {
-      if (!alreadyCalled) {
-        result = func.apply(this, arguments);
-        alreadyCalled = true;
-        argArray.push(arguments);
-        resultsArray.push(result);
-      }
-      if (alreadyCalled) {
-        var indexArg = _.indexOf(argArray, arguments);
-        if (indexArg === -1) {
-          // result = func.apply(this, arguments);
-          argArray.push(arguments);
-          resultsArray.push(result);
-        } else {
-          result = resultsArray[indexArg];
-        }
+      var args = JSON.stringify(arguments);
+
+      if (!cache[args]) {
+        cache[args] = func.apply(null, arguments);
       }
 
-      console.log('result: ', result);
-      console.log('result array: ', resultsArray);
-      console.log('args: ', arguments);
-      return result;
+      return cache[args];
     };
-
-
-    // return result
-
-
-
-
-
-
-
-    // results store
-    // const cache = {};
-    // var stored = function(input) {
-    // // return the value if it exists in the cache object
-    // // otherwise, compute the input with the passed in function and
-    // // update the collection object with the input as the key and
-    // // computed result as the value to that key
-    // // End result will be key-value pairs stored inside cache
-    //   return cache[input] || (cache[input] = func(input));
-    // };
-
-
-    // return cache;
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -419,6 +363,7 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    return setTimeout.apply(this, arguments);
   };
 
 
@@ -433,6 +378,18 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var shuffledArray = [];
+    var arrayCopy = array.slice(0);
+
+    for (var i = arrayCopy.length - 1; i >= 0; i--) {
+      var randomNumber = Math.floor(Math.random() * (i));
+      var temporaryVar = arrayCopy[i];
+      arrayCopy[i] = arrayCopy[randomNumber];
+      arrayCopy[randomNumber] = temporaryVar;
+      shuffledArray.push(arrayCopy[i]);
+    }
+
+    return shuffledArray;
   };
 
 
