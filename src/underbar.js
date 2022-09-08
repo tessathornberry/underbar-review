@@ -111,13 +111,18 @@
   // Produce a duplicate-free version of the array.
   _.uniq = function(array, isSorted, iterator) {
     var uniqueArray = [];
+    var uniqueIteratedItems = [];
 
-    if (!iterator) {
-      iterator = _.identity;
-    }
     _.each(array, function(item) {
-      if (uniqueArray.includes(item) === false) {
-        uniqueArray.push(item);
+      if (iterator) {
+        if (!uniqueIteratedItems.includes(iterator(item)) && !uniqueArray.includes(item)) {
+          uniqueIteratedItems.push(iterator(item));
+          uniqueArray.push(item);
+        }
+      } else {
+        if (!uniqueArray.includes(item)) {
+          uniqueArray.push(item);
+        }
       }
     });
 
@@ -126,10 +131,17 @@
 
 
   // Return the results of applying an iterator to each element.
+  // map() is a useful primitive iteration function that works a lot
+  // like each(), but in addition to running the operation on all
+  // the members, it also maintains an array of results.
   _.map = function(collection, iterator) {
-    // map() is a useful primitive iteration function that works a lot
-    // like each(), but in addition to running the operation on all
-    // the members, it also maintains an array of results.
+    var array = [];
+
+    _.each(collection, function(item, index, collection) {
+      array.push(iterator(item, index, collection));
+    });
+
+    return array;
   };
 
   /*
@@ -171,6 +183,18 @@
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
   _.reduce = function(collection, iterator, accumulator) {
+    var array = collection;
+
+    if (accumulator === undefined) {
+      var accumulator = collection[0];
+      array = collection.slice(1);
+    }
+
+    _.each(array, function(item) {
+      accumulator = iterator(accumulator, item);
+    });
+
+    return accumulator;
   };
 
   // Determine if the array or object contains a given value (using `===`).
@@ -187,14 +211,46 @@
 
 
   // Determine whether all of the elements match a truth test.
+  // TIP: Try re-using reduce() here.
   _.every = function(collection, iterator) {
-    // TIP: Try re-using reduce() here.
+    var isTrue = true;
+
+    _.reduce(collection, function(memo, item) {
+      if (iterator === undefined) {
+        if (!item) {
+          isTrue = false;
+        }
+      } else {
+        if (!iterator(item)) {
+          isTrue = false;
+        }
+      }
+    }, true);
+
+    return isTrue;
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
+  // TIP: There's a very clever way to re-use every() here.
   _.some = function(collection, iterator) {
-    // TIP: There's a very clever way to re-use every() here.
+    var isTrue = false;
+
+    _.every(collection, function(item) {
+      if (iterator === undefined) {
+        if (item) {
+          isTrue = true;
+          return isTrue;
+        }
+      } else {
+        if (iterator(item)) {
+          isTrue = true;
+          return isTrue;
+        }
+      }
+    });
+
+    return isTrue;
   };
 
 
@@ -217,11 +273,33 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    var result;
+    var argExtended = Array.from(arguments);
+    var argSliced = argExtended.slice(1);
+
+    _.each(argSliced, function(item) {
+      result = Object.assign(obj, item);
+    });
+
+    return result;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    var result = obj;
+    var argExtended = Array.from(arguments);
+    var argSliced = argExtended.slice(1);
+
+    _.each(argSliced, function(item) {
+      for (var key in item) {
+        if (result[key] === undefined) {
+          result[key] = item[key];
+        }
+      }
+    });
+
+    return result;
   };
 
 
@@ -265,6 +343,73 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    console.log('beginning args: ', arguments);
+    var alreadyCalled = false;
+    var result;
+    var resultsArray = [];
+    var argArray = [];
+
+    // if function has not been called yet
+      // change alreadyCalled to true
+      // result equals calling function with the arguments
+      // push result into result array
+      // push argument into argArray
+    // if function has been called already
+      // check to see if arguments have ever been called already with this function
+      // if arguments have not been used
+        // result equals calling function with the arguments
+        // push result into result array
+        // push argument into argArray
+      // else if arguments have been called
+        // find the index of arguments array
+        // return the results at the index in the results array
+
+    return function() {
+      if (!alreadyCalled) {
+        result = func.apply(this, arguments);
+        alreadyCalled = true;
+        argArray.push(arguments);
+        resultsArray.push(result);
+      }
+      if (alreadyCalled) {
+        var indexArg = _.indexOf(argArray, arguments);
+        if (indexArg === -1) {
+          // result = func.apply(this, arguments);
+          argArray.push(arguments);
+          resultsArray.push(result);
+        } else {
+          result = resultsArray[indexArg];
+        }
+      }
+
+      console.log('result: ', result);
+      console.log('result array: ', resultsArray);
+      console.log('args: ', arguments);
+      return result;
+    };
+
+
+    // return result
+
+
+
+
+
+
+
+    // results store
+    // const cache = {};
+    // var stored = function(input) {
+    // // return the value if it exists in the cache object
+    // // otherwise, compute the input with the passed in function and
+    // // update the collection object with the input as the key and
+    // // computed result as the value to that key
+    // // End result will be key-value pairs stored inside cache
+    //   return cache[input] || (cache[input] = func(input));
+    // };
+
+
+    // return cache;
   };
 
   // Delays a function for the given number of milliseconds, and then calls
